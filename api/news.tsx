@@ -33,8 +33,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const xml = await response.text();
     const items = parseRSS(xml);
+    // Ordena do mais recente para o mais antigo
+    items.sort((a, b) => (b.rawDate || 0) - (a.rawDate || 0));
+    // Remove campo interno antes de retornar
+    const clean = items.map(({ rawDate, ...rest }) => rest);
 
-    return res.status(200).json({ status: 'ok', items });
+    return res.status(200).json({ status: 'ok', items: clean });
   } catch (err: any) {
     return res.status(500).json({ error: 'Falha ao buscar o feed', detail: err.message });
   }
@@ -81,6 +85,7 @@ function parseRSS(xml: string) {
       .slice(0, 300);
 
     const pubDateRaw = get('pubDate');
+    const rawDate = pubDateRaw ? new Date(pubDateRaw).getTime() : 0;
     const pubDate = pubDateRaw
       ? new Date(pubDateRaw).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
       : '';
@@ -90,6 +95,7 @@ function parseRSS(xml: string) {
       description,
       link: get('link') || get('guid') || '',
       pubDate,
+      rawDate,
       thumbnail,
       author: get('dc:creator') || get('author') || '',
     });

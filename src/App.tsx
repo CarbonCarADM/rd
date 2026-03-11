@@ -44,6 +44,8 @@ function NewsPage({ onBack }: { onBack: () => void }) {
     { label: 'Vagalume',      url: 'https://news.vagalume.com.br/feed/' },
     { label: 'Billboard BR',  url: 'https://www.billboard.com.br/feed/' },
   ];
+  // Nota: no AI Studio os feeds reais não carregam por bloqueio de CORS.
+  // Na Vercel a função /api/news busca os feeds no servidor sem restrições.
 
   const MOCK_NEWS: NewsItem[] = [
     { title: 'Beyoncé anuncia nova turnê mundial para 2026', description: 'A cantora confirmou datas para América do Sul, incluindo três shows no Brasil em março de 2026. Os ingressos estarão disponíveis a partir da próxima semana nas principais plataformas de venda.', link: 'https://rollingstone.uol.com.br', pubDate: '11 jun', thumbnail: 'https://picsum.photos/seed/music1/800/450', author: 'Rolling Stone BR' },
@@ -151,57 +153,62 @@ function NewsPage({ onBack }: { onBack: () => void }) {
         transition={{ duration: 0.4 }}
         className="relative z-10 flex flex-col min-h-screen"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-6 pb-4 shrink-0">
-          <div className="w-10" />
-          <img src="https://i.postimg.cc/3whN6qqq/rd104.png" alt="Logo" className="h-32 sm:h-24 w-auto object-contain" referrerPolicy="no-referrer" />
-          <button onClick={onBack} className="p-2 bg-white/10 hover:bg-white/20 rounded-full border border-white/15 transition-all active:scale-95 flex items-center justify-center">
-            <X size={20} />
-          </button>
-        </div>
+        {/* Wrapper centralizado para desktop */}
+        <div className="w-full max-w-2xl mx-auto flex flex-col flex-1">
 
-        {/* Title */}
-        <div className="px-4 pb-3 shrink-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Music2 size={18} className="text-red-400" />
-            <h2 className="text-2xl font-bold tracking-tight">Notícias</h2>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 pt-6 pb-4 shrink-0">
+            <div className="w-10" />
+            <img src="https://i.postimg.cc/3whN6qqq/rd104.png" alt="Logo" className="h-20 sm:h-16 w-auto object-contain" referrerPolicy="no-referrer" />
+            <button onClick={onBack} className="p-2 bg-white/10 hover:bg-white/20 rounded-full border border-white/15 transition-all active:scale-95 flex items-center justify-center">
+              <X size={20} />
+            </button>
           </div>
-          <p className="text-white/40 text-xs tracking-wide">Mundo da música em tempo real</p>
-        </div>
 
-        {/* Source Tabs */}
-        <div className="flex gap-2 px-4 pb-4 shrink-0 overflow-x-auto no-scrollbar">
-          {SOURCES.map((s, i) => (
-            <button key={i} onClick={() => handleSource(i)}
-              className={`px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase whitespace-nowrap transition-all active:scale-95 min-h-[36px] border ${activeSource === i ? 'text-white border-red-600/60' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`}
-              style={activeSource === i ? { background: 'linear-gradient(135deg,#c41e10,#8b1208)' } : {}}
-            >{s.label}</button>
-          ))}
-        </div>
+          {/* Title */}
+          <div className="px-4 pb-3 shrink-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Music2 size={18} className="text-red-400" />
+              <h2 className="text-2xl font-bold tracking-tight">Notícias</h2>
+            </div>
+            <p className="text-white/40 text-xs tracking-wide">Mundo da música em tempo real</p>
+          </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-4 pb-8 no-scrollbar">
-          {loading && (
-            <div className="flex flex-col items-center justify-center gap-3 py-16">
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }} className="w-8 h-8 rounded-full border-2 border-white/10 border-t-red-500" />
-              <p className="text-white/30 text-xs tracking-widest uppercase">Carregando notícias...</p>
-            </div>
-          )}
-          {error && !loading && (
-            <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-              <Newspaper size={40} className="text-white/20" />
-              <p className="text-white/60 font-medium">Não foi possível carregar</p>
-              <button onClick={() => fetchNews(activeSource)} className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white border border-white/15 bg-white/8">
-                <RefreshCw size={14} /> Tentar novamente
-              </button>
-            </div>
-          )}
-          {!loading && !error && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 gap-3">
-              {news[0] && <NewsCard item={news[0]} featured />}
-              {news.slice(1).map((item, i) => <NewsCard key={i} item={item} />)}
-            </motion.div>
-          )}
+          {/* Source Tabs */}
+          <div className="flex gap-2 px-4 pb-4 shrink-0 overflow-x-auto no-scrollbar">
+            {SOURCES.map((s, i) => (
+              <button key={i} onClick={() => handleSource(i)}
+                className={`px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase whitespace-nowrap transition-all active:scale-95 min-h-[36px] border ${activeSource === i ? 'text-white border-red-600/60' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`}
+                style={activeSource === i ? { background: 'linear-gradient(135deg,#c41e10,#8b1208)' } : {}}
+              >{s.label}</button>
+            ))}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto px-4 pb-8 no-scrollbar">
+            {loading && (
+              <div className="flex flex-col items-center justify-center gap-3 py-16">
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }} className="w-8 h-8 rounded-full border-2 border-white/10 border-t-red-500" />
+                <p className="text-white/30 text-xs tracking-widest uppercase">Carregando notícias...</p>
+              </div>
+            )}
+            {error && !loading && (
+              <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+                <Newspaper size={40} className="text-white/20" />
+                <p className="text-white/60 font-medium">Não foi possível carregar</p>
+                <button onClick={() => fetchNews(activeSource)} className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-white border border-white/15 bg-white/8">
+                  <RefreshCw size={14} /> Tentar novamente
+                </button>
+              </div>
+            )}
+            {!loading && !error && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {news[0] && <NewsCard item={news[0]} featured />}
+                {news.slice(1).map((item, i) => <NewsCard key={i} item={item} />)}
+              </motion.div>
+            )}
+          </div>
+
         </div>
       </motion.div>
 
@@ -225,15 +232,15 @@ function NewsPage({ onBack }: { onBack: () => void }) {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-lg rounded-t-[2rem] overflow-hidden"
-              style={{ background: 'linear-gradient(180deg, #1a0a0a 0%, #0a0a0a 100%)', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '88vh' }}
+              className="relative w-full max-w-md rounded-t-[2rem] overflow-hidden"
+              style={{ background: 'linear-gradient(180deg, #1a0a0a 0%, #0a0a0a 100%)', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '85vh' }}
             >
               {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-1">
                 <div className="w-10 h-1 rounded-full bg-white/20" />
               </div>
 
-              <div className="overflow-y-auto no-scrollbar pb-8" style={{ maxHeight: 'calc(88vh - 20px)' }}>
+              <div className="overflow-y-auto no-scrollbar pb-8" style={{ maxHeight: 'calc(85vh - 20px)' }}>
                 {/* Imagem */}
                 {selected.thumbnail && (
                   <div className="relative w-full aspect-video overflow-hidden">
