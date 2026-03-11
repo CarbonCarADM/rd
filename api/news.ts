@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const ALLOWED_FEEDS = [
-  'https://rollingstone.uol.com.br/feed/',
-  'https://news.vagalume.com.br/feed/',
-  'https://www.billboard.com.br/feed/',
+  'https://rollingstone.com.br/canal/musica/feed/',
+  'https://www.vagalume.com.br/news/feed/',
+  'https://blognroll.com.br/category/brasil/feed/',
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

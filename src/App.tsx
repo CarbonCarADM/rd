@@ -32,6 +32,53 @@ interface NewsItem {
 }
 
 // ─── News Component ───────────────────────────────────────
+const NewsCard: React.FC<{ item: NewsItem; featured?: boolean; onClick: () => void }> = ({ item, featured = false, onClick }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    onClick={onClick}
+    className={`${featured ? 'col-span-2' : ''} rounded-2xl overflow-hidden bg-white/8 border border-white/10 hover:bg-white/12 transition-all active:scale-[0.98] group cursor-pointer flex flex-col`}
+  >
+    <div className={`relative w-full overflow-hidden bg-white/5 ${featured ? 'aspect-video' : 'aspect-video'}`}>
+      {item.thumbnail ? (
+        <img
+          src={item.thumbnail}
+          alt={item.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          onError={(e) => {
+            const el = e.target as HTMLImageElement;
+            el.parentElement!.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-white/5"><svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.15)' stroke-width='1.5'><path d='M9 18V5l12-2v13'/><circle cx='6' cy='18' r='3'/><circle cx='18' cy='16' r='3'/></svg></div>`;
+          }}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <Music2 size={28} className="text-white/15" />
+        </div>
+      )}
+      {featured && (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest text-white border border-red-500/40" style={{ background: 'linear-gradient(135deg,#c41e10cc,#8b1208cc)' }}>
+            Destaque
+          </span>
+        </>
+      )}
+    </div>
+    <div className={`flex flex-col flex-1 ${featured ? 'p-4' : 'p-3'}`}>
+      <p className={`font-bold leading-snug flex-1 ${featured ? 'text-sm line-clamp-2' : 'text-xs line-clamp-3'}`}>{item.title}</p>
+      {featured && <p className="text-white/40 text-xs mt-1.5 line-clamp-2 leading-relaxed">{item.description}</p>}
+      <div className="flex items-center justify-between mt-2.5">
+        <div className="flex items-center gap-1.5">
+          {item.author && <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest truncate max-w-[80px]">{item.author}</span>}
+          {item.author && item.pubDate && <span className="text-white/20 text-[9px]">·</span>}
+          <span className="text-[9px] text-white/30">{item.pubDate}</span>
+        </div>
+        <ExternalLink size={11} className="text-white/20 shrink-0" />
+      </div>
+    </div>
+  </motion.div>
+);
+
 function NewsPage({ onBack }: { onBack: () => void }) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,12 +87,10 @@ function NewsPage({ onBack }: { onBack: () => void }) {
   const [selected, setSelected] = useState<NewsItem | null>(null);
 
   const SOURCES = [
-    { label: 'Rolling Stone', url: 'https://rollingstone.uol.com.br/feed/' },
-    { label: 'Vagalume',      url: 'https://news.vagalume.com.br/feed/' },
-    { label: 'Billboard BR',  url: 'https://www.billboard.com.br/feed/' },
+    { label: 'Rolling Stone', url: 'https://rollingstone.com.br/canal/musica/feed/' },
+    { label: 'Vagalume',      url: 'https://www.vagalume.com.br/news/feed/' },
+    { label: 'Blog N Roll',   url: 'https://blognroll.com.br/category/brasil/feed/' },
   ];
-  // Nota: no AI Studio os feeds reais não carregam por bloqueio de CORS.
-  // Na Vercel a função /api/news busca os feeds no servidor sem restrições.
 
   const MOCK_NEWS: NewsItem[] = [
     { title: 'Beyoncé anuncia nova turnê mundial para 2026', description: 'A cantora confirmou datas para América do Sul, incluindo três shows no Brasil em março de 2026. Os ingressos estarão disponíveis a partir da próxima semana nas principais plataformas de venda.', link: 'https://rollingstone.uol.com.br', pubDate: '11 jun', thumbnail: 'https://picsum.photos/seed/music1/800/450', author: 'Rolling Stone BR' },
@@ -96,53 +141,6 @@ function NewsPage({ onBack }: { onBack: () => void }) {
 
   const handleSource = (i: number) => { setActiveSource(i); setNews([]); };
 
-  const NewsCard = ({ item, featured = false }: { item: NewsItem; featured?: boolean }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      onClick={() => setSelected(item)}
-      className={`${featured ? 'col-span-2' : ''} rounded-2xl overflow-hidden bg-white/8 border border-white/10 hover:bg-white/12 transition-all active:scale-[0.98] group cursor-pointer flex flex-col`}
-    >
-      <div className={`relative w-full overflow-hidden bg-white/5 ${featured ? 'aspect-video' : 'aspect-video'}`}>
-        {item.thumbnail ? (
-          <img
-            src={item.thumbnail}
-            alt={item.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => {
-              const el = e.target as HTMLImageElement;
-              el.parentElement!.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-white/5"><svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.15)' stroke-width='1.5'><path d='M9 18V5l12-2v13'/><circle cx='6' cy='18' r='3'/><circle cx='18' cy='16' r='3'/></svg></div>`;
-            }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Music2 size={28} className="text-white/15" />
-          </div>
-        )}
-        {featured && (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest text-white border border-red-500/40" style={{ background: 'linear-gradient(135deg,#c41e10cc,#8b1208cc)' }}>
-              Destaque
-            </span>
-          </>
-        )}
-      </div>
-      <div className={`flex flex-col flex-1 ${featured ? 'p-4' : 'p-3'}`}>
-        <p className={`font-bold leading-snug flex-1 ${featured ? 'text-sm line-clamp-2' : 'text-xs line-clamp-3'}`}>{item.title}</p>
-        {featured && <p className="text-white/40 text-xs mt-1.5 line-clamp-2 leading-relaxed">{item.description}</p>}
-        <div className="flex items-center justify-between mt-2.5">
-          <div className="flex items-center gap-1.5">
-            {item.author && <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest truncate max-w-[80px]">{item.author}</span>}
-            {item.author && item.pubDate && <span className="text-white/20 text-[9px]">·</span>}
-            <span className="text-[9px] text-white/30">{item.pubDate}</span>
-          </div>
-          <ExternalLink size={11} className="text-white/20 shrink-0" />
-        </div>
-      </div>
-    </motion.div>
-  );
-
   return (
     <>
       <motion.div
@@ -159,7 +157,7 @@ function NewsPage({ onBack }: { onBack: () => void }) {
           {/* Header */}
           <div className="flex items-center justify-between px-4 pt-6 pb-4 shrink-0">
             <div className="w-10" />
-            <img src="https://i.postimg.cc/3whN6qqq/rd104.png" alt="Logo" className="h-20 sm:h-16 w-auto object-contain" referrerPolicy="no-referrer" />
+            <img src="https://i.postimg.cc/3whN6qqq/rd104.png" alt="Logo" className="h-28 sm:h-24 w-auto object-contain" referrerPolicy="no-referrer" />
             <button onClick={onBack} className="p-2 bg-white/10 hover:bg-white/20 rounded-full border border-white/15 transition-all active:scale-95 flex items-center justify-center">
               <X size={20} />
             </button>
@@ -203,8 +201,8 @@ function NewsPage({ onBack }: { onBack: () => void }) {
             )}
             {!loading && !error && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {news[0] && <NewsCard item={news[0]} featured />}
-                {news.slice(1).map((item, i) => <NewsCard key={i} item={item} />)}
+                {news[0] && <NewsCard item={news[0]} featured onClick={() => setSelected(news[0])} />}
+                {news.slice(1).map((item, i) => <NewsCard key={i} item={item} onClick={() => setSelected(item)} />)}
               </motion.div>
             )}
           </div>
@@ -219,7 +217,7 @@ function NewsPage({ onBack }: { onBack: () => void }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end justify-center"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
             onClick={() => setSelected(null)}
           >
             {/* Backdrop */}
@@ -227,20 +225,20 @@ function NewsPage({ onBack }: { onBack: () => void }) {
 
             {/* Sheet */}
             <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-md rounded-t-[2rem] overflow-hidden"
-              style={{ background: 'linear-gradient(180deg, #1a0a0a 0%, #0a0a0a 100%)', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '85vh' }}
+              className="relative w-full max-w-2xl sm:rounded-[2rem] rounded-t-[2rem] overflow-hidden"
+              style={{ background: 'linear-gradient(180deg, #1a0a0a 0%, #0a0a0a 100%)', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90vh' }}
             >
               {/* Drag handle */}
               <div className="flex justify-center pt-3 pb-1">
                 <div className="w-10 h-1 rounded-full bg-white/20" />
               </div>
 
-              <div className="overflow-y-auto no-scrollbar pb-8" style={{ maxHeight: 'calc(85vh - 20px)' }}>
+              <div className="overflow-y-auto no-scrollbar pb-8" style={{ maxHeight: 'calc(90vh - 20px)' }}>
                 {/* Imagem */}
                 {selected.thumbnail && (
                   <div className="relative w-full aspect-video overflow-hidden">
@@ -422,7 +420,7 @@ export default function App() {
               <img
                 src="https://i.postimg.cc/3whN6qqq/rd104.png"
                 alt="Difusora Colatina 104.3"
-                className="h-64 sm:h-80 w-auto object-contain drop-shadow-[0_0_70px_rgba(180,30,20,0.7)]"
+                className="h-80 sm:h-96 w-auto object-contain drop-shadow-[0_0_70px_rgba(180,30,20,0.7)]"
                 referrerPolicy="no-referrer"
               />
             </motion.div>
@@ -554,7 +552,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between px-4 pt-6 pb-4">
               <div className="w-10" />
-              <img src="https://i.postimg.cc/3whN6qqq/rd104.png" alt="Logo" className="h-32 sm:h-24 w-auto object-contain" referrerPolicy="no-referrer" />
+              <img src="https://i.postimg.cc/3whN6qqq/rd104.png" alt="Logo" className="h-40 sm:h-32 w-auto object-contain" referrerPolicy="no-referrer" />
               <button
                 onClick={() => setActivePage('home')}
                 className="p-2 bg-white/10 hover:bg-white/20 rounded-full border border-white/15 transition-all active:scale-95 flex items-center justify-center"
@@ -602,7 +600,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between px-4 pt-6 pb-4">
               <div className="w-10" />
-              <img src="https://i.postimg.cc/3whN6qqq/rd104.png" alt="Logo" className="h-32 sm:h-24 w-auto object-contain" referrerPolicy="no-referrer" />
+              <img src="https://i.postimg.cc/3whN6qqq/rd104.png" alt="Logo" className="h-40 sm:h-32 w-auto object-contain" referrerPolicy="no-referrer" />
               <button
                 onClick={() => setActivePage('home')}
                 className="p-2 bg-white/10 hover:bg-white/20 rounded-full border border-white/15 transition-all active:scale-95 flex items-center justify-center"
