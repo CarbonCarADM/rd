@@ -5,6 +5,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
+  BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate
+} from 'react-router-dom';
+import {
   Play, Pause, Volume2, VolumeX,
   Mic2, Share2, Maximize2,
   Instagram, Facebook, Twitter,
@@ -79,7 +82,9 @@ interface CultureItem {
 }
 
 // ─── Admin Page ───────────────────────────────────────────
-function AdminPage({ onBack }: { onBack: () => void }) {
+function AdminPage() {
+  const navigate = useNavigate();
+  const onBack = () => navigate('/player');
   const [authed, setAuthed] = useState(false);
   const [senha, setSenha] = useState('');
   const [senhaErro, setSenhaErro] = useState(false);
@@ -149,7 +154,7 @@ function AdminPage({ onBack }: { onBack: () => void }) {
 
   // ── Tela de login ──
   if (!authed) return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <motion.div key="admin-login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6">
       <div className="w-full max-w-sm">
         <div className="flex items-center justify-between mb-8">
@@ -194,7 +199,7 @@ function AdminPage({ onBack }: { onBack: () => void }) {
 
   // ── Painel ──
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <motion.div key="admin-panel" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="relative z-10 flex flex-col min-h-screen">
       <div className="w-full max-w-2xl mx-auto flex flex-col flex-1">
 
@@ -377,7 +382,9 @@ function AdminPage({ onBack }: { onBack: () => void }) {
 }
 
 // ─── News Page ────────────────────────────────────────────
-function NewsPage({ onBack }: { onBack: () => void }) {
+function NewsPage() {
+  const navigate = useNavigate();
+  const onBack = () => navigate('/player');
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<NewsItem | null>(null);
@@ -569,7 +576,21 @@ function NewsPage({ onBack }: { onBack: () => void }) {
 }
 
 // ─── Landing Page ─────────────────────────────────────────
-function LandingPage({ onPlay, onNavigate }: { onPlay: () => void, onNavigate: (p: any) => void }) {
+function LandingPage({ onPlay }: { onPlay: () => void }) {
+  const navigate = useNavigate();
+  const [showAllNews, setShowAllNews] = useState(false);
+  const onNavigate = (p: string) => {
+    if (p === 'landing') {
+      setShowAllNews(false);
+      navigate('/');
+    }
+    else if (p === 'news') {
+      setShowAllNews(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    else if (p === 'home') navigate('/player');
+    else navigate(`/${p}`);
+  };
   const [news, setNews] = useState<NewsItem[]>([]);
   const [agenda, setAgenda] = useState<AgendaItem[]>([]);
   const [culture, setCulture] = useState<CultureItem[]>([]);
@@ -611,7 +632,7 @@ function LandingPage({ onPlay, onNavigate }: { onPlay: () => void, onNavigate: (
   ];
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="min-h-screen bg-[#f8f9fa] text-slate-900 overflow-y-auto">
       
       {/* Header Bar */}
@@ -644,102 +665,142 @@ function LandingPage({ onPlay, onNavigate }: { onPlay: () => void, onNavigate: (
           {/* News Section */}
           <div className="lg:col-span-8 space-y-8 md:space-y-12">
             
-            {/* Featured News */}
-            <section>
-              <div className="flex items-center justify-between mb-4 md:mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-1.5 h-6 bg-orange-600 rounded-full" />
-                  <h2 className="text-xl md:text-2xl font-bold tracking-tight uppercase text-slate-800">Destaque</h2>
-                </div>
-                <button onClick={() => onNavigate('news')} className="text-[10px] font-bold uppercase tracking-widest text-orange-600 hover:underline">Ver todas</button>
-              </div>
-              
-              {loading ? (
-                <div className="h-64 md:h-96 bg-white rounded-3xl animate-pulse" />
-              ) : featured ? (
-                <article className="group cursor-pointer bg-white rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-200"
-                  onClick={() => setSelected(featured)}>
-                  <div className="relative aspect-video md:aspect-[21/9] overflow-hidden">
-                    <img src={featured.imagem_url} alt={featured.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                      onError={e => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/news/800/400'; }} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                    <div className="absolute bottom-4 md:bottom-6 left-5 md:left-8 right-5 md:right-8">
-                      <span className="px-2.5 py-0.5 rounded-full bg-orange-600 text-white text-[8px] md:text-[10px] font-bold uppercase tracking-widest mb-2 md:mb-3 inline-block">Notícia Principal</span>
-                      <h3 className="text-white text-lg md:text-3xl font-bold leading-tight line-clamp-2">{featured.titulo}</h3>
-                    </div>
+            {showAllNews ? (
+              <section>
+                <div className="flex items-center justify-between mb-6 md:mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-6 bg-orange-600 rounded-full" />
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight uppercase text-slate-800">Todas as Notícias</h2>
                   </div>
-                </article>
-              ) : (
-                <div className="p-8 md:p-12 text-center bg-white rounded-[2rem] border border-dashed border-slate-300 flex flex-col items-center gap-3">
-                  <Newspaper size={32} className="text-slate-200" />
-                  <p className="text-slate-400 text-sm font-medium">Nenhuma notícia em destaque no momento.</p>
+                  <button onClick={() => setShowAllNews(false)} className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-orange-600 transition-colors flex items-center gap-2">
+                    <X size={12} /> Voltar
+                  </button>
                 </div>
-              )}
-            </section>
-            
-            {/* Entertainment and Culture */}
-            <section>
-              <div className="flex items-center gap-3 mb-4 md:mb-6">
-                <div className="w-1.5 h-6 bg-orange-600 rounded-full" />
-                <h2 className="text-xl md:text-2xl font-bold tracking-tight uppercase text-slate-800">Entretenimento</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {culture.length > 0 ? culture.map(item => (
-                  <article key={item.id} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 hover:border-orange-200 hover:shadow-md transition-all group cursor-pointer"
-                    onClick={() => setSelected(item)}>
-                    {item.imagem_url && (
-                      <div className="aspect-video overflow-hidden">
-                        <img src={item.imagem_url} alt={item.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      </div>
-                    )}
-                    <div className="p-5 md:p-6">
-                      <h3 className="font-bold text-base md:text-lg mb-2 group-hover:text-orange-600 transition-colors line-clamp-2 leading-snug">{item.titulo}</h3>
-                      <p className="text-slate-500 text-xs md:text-sm line-clamp-3 leading-relaxed">{item.conteudo}</p>
-                    </div>
-                  </article>
-                )) : (
-                  <div className="col-span-1 md:col-span-2 p-8 md:p-12 text-center bg-white rounded-[2rem] border border-dashed border-slate-300 flex flex-col items-center gap-3">
-                    <Music2 size={32} className="text-slate-200" />
-                    <p className="text-slate-400 text-sm font-medium">Nenhum conteúdo de entretenimento disponível.</p>
-                  </div>
-                )}
-              </div>
-            </section>
 
-            {/* General News */}
-            <section>
-              <div className="flex items-center gap-3 mb-4 md:mb-6">
-                <div className="w-1.5 h-6 bg-red-600 rounded-full" />
-                <h2 className="text-xl md:text-2xl font-bold tracking-tight uppercase text-slate-800">Últimas Notícias</h2>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {loading ? (
-                  [1,2,3,4].map(i => <div key={i} className="h-32 md:h-40 bg-white rounded-2xl animate-pulse" />)
-                ) : general.length > 0 ? (
-                  general.map(item => (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {news.map(item => (
                     <article key={item.id} onClick={() => setSelected(item)}
-                      className="flex gap-3 md:gap-4 p-3 md:p-4 bg-white rounded-[1.5rem] md:rounded-2xl border border-slate-200 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group">
-                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden shrink-0 bg-slate-100">
-                        <img src={item.imagem_url} alt={item.titulo} className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                          onError={e => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/news/200/200'; }} />
-                      </div>
-                      <div className="flex flex-col justify-center min-w-0">
-                        <h4 className="font-bold text-xs md:text-sm text-slate-800 line-clamp-2 leading-snug group-hover:text-orange-600 transition-colors">{item.titulo}</h4>
-                        <p className="text-[9px] md:text-[10px] text-slate-400 mt-2 font-medium uppercase tracking-wider">
-                          {new Date(item.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
-                        </p>
+                      className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 hover:border-orange-200 hover:shadow-md transition-all group cursor-pointer flex flex-col">
+                      {item.imagem_url && (
+                        <div className="aspect-video overflow-hidden">
+                          <img src={item.imagem_url} alt={item.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            onError={e => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/news/400/225'; }} />
+                        </div>
+                      )}
+                      <div className="p-5 md:p-6 flex-1 flex flex-col">
+                        <h3 className="font-bold text-base md:text-lg mb-2 group-hover:text-orange-600 transition-colors line-clamp-2 leading-snug">{item.titulo}</h3>
+                        <p className="text-slate-500 text-xs md:text-sm line-clamp-3 leading-relaxed flex-1">{item.conteudo}</p>
+                        <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                            {new Date(item.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                          </span>
+                          <ExternalLink size={12} className="text-slate-300" />
+                        </div>
                       </div>
                     </article>
-                  ))
-                ) : (
-                  <div className="col-span-1 md:col-span-2 p-8 md:p-12 text-center bg-white rounded-[2rem] border border-dashed border-slate-300 flex flex-col items-center gap-3">
-                    <Newspaper size={32} className="text-slate-200" />
-                    <p className="text-slate-400 text-sm font-medium">Mais notícias em breve.</p>
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <>
+                {/* Featured News */}
+                <section>
+                  <div className="flex items-center justify-between mb-4 md:mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-1.5 h-6 bg-orange-600 rounded-full" />
+                      <h2 className="text-xl md:text-2xl font-bold tracking-tight uppercase text-slate-800">Destaque</h2>
+                    </div>
+                    <button onClick={() => setShowAllNews(true)} className="text-[10px] font-bold uppercase tracking-widest text-orange-600 hover:underline">Ver todas</button>
                   </div>
-                )}
-              </div>
-            </section>
+                  
+                  {loading ? (
+                    <div className="h-64 md:h-96 bg-white rounded-3xl animate-pulse" />
+                  ) : featured ? (
+                    <article className="group cursor-pointer bg-white rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-200"
+                      onClick={() => setSelected(featured)}>
+                      <div className="relative aspect-video md:aspect-[21/9] overflow-hidden">
+                        <img src={featured.imagem_url} alt={featured.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                          onError={e => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/news/800/400'; }} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                        <div className="absolute bottom-4 md:bottom-6 left-5 md:left-8 right-5 md:right-8">
+                          <span className="px-2.5 py-0.5 rounded-full bg-orange-600 text-white text-[8px] md:text-[10px] font-bold uppercase tracking-widest mb-2 md:mb-3 inline-block">Notícia Principal</span>
+                          <h3 className="text-white text-lg md:text-3xl font-bold leading-tight line-clamp-2">{featured.titulo}</h3>
+                        </div>
+                      </div>
+                    </article>
+                  ) : (
+                    <div className="p-8 md:p-12 text-center bg-white rounded-[2rem] border border-dashed border-slate-300 flex flex-col items-center gap-3">
+                      <Newspaper size={32} className="text-slate-200" />
+                      <p className="text-slate-400 text-sm font-medium">Nenhuma notícia em destaque no momento.</p>
+                    </div>
+                  )}
+                </section>
+                
+                {/* Entertainment and Culture */}
+                <section>
+                  <div className="flex items-center gap-3 mb-4 md:mb-6">
+                    <div className="w-1.5 h-6 bg-orange-600 rounded-full" />
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight uppercase text-slate-800">Entretenimento</h2>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {culture.length > 0 ? culture.map(item => (
+                      <article key={item.id} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 hover:border-orange-200 hover:shadow-md transition-all group cursor-pointer"
+                        onClick={() => setSelected(item)}>
+                        {item.imagem_url && (
+                          <div className="aspect-video overflow-hidden">
+                            <img src={item.imagem_url} alt={item.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          </div>
+                        )}
+                        <div className="p-5 md:p-6">
+                          <h3 className="font-bold text-base md:text-lg mb-2 group-hover:text-orange-600 transition-colors line-clamp-2 leading-snug">{item.titulo}</h3>
+                          <p className="text-slate-500 text-xs md:text-sm line-clamp-3 leading-relaxed">{item.conteudo}</p>
+                        </div>
+                      </article>
+                    )) : (
+                      <div className="col-span-1 md:col-span-2 p-8 md:p-12 text-center bg-white rounded-[2rem] border border-dashed border-slate-300 flex flex-col items-center gap-3">
+                        <Music2 size={32} className="text-slate-200" />
+                        <p className="text-slate-400 text-sm font-medium">Nenhum conteúdo de entretenimento disponível.</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* General News */}
+                <section>
+                  <div className="flex items-center gap-3 mb-4 md:mb-6">
+                    <div className="w-1.5 h-6 bg-red-600 rounded-full" />
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight uppercase text-slate-800">Últimas Notícias</h2>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {loading ? (
+                      [1,2,3,4].map(i => <div key={i} className="h-32 md:h-40 bg-white rounded-2xl animate-pulse" />)
+                    ) : general.length > 0 ? (
+                      general.map(item => (
+                        <article key={item.id} onClick={() => setSelected(item)}
+                          className="flex gap-3 md:gap-4 p-3 md:p-4 bg-white rounded-[1.5rem] md:rounded-2xl border border-slate-200 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group">
+                          <div className="w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden shrink-0 bg-slate-100">
+                            <img src={item.imagem_url} alt={item.titulo} className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                              onError={e => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/news/200/200'; }} />
+                          </div>
+                          <div className="flex flex-col justify-center min-w-0">
+                            <h4 className="font-bold text-xs md:text-sm text-slate-800 line-clamp-2 leading-snug group-hover:text-orange-600 transition-colors">{item.titulo}</h4>
+                            <p className="text-[9px] md:text-[10px] text-slate-400 mt-2 font-medium uppercase tracking-wider">
+                              {new Date(item.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
+                            </p>
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <div className="col-span-1 md:col-span-2 p-8 md:p-12 text-center bg-white rounded-[2rem] border border-dashed border-slate-300 flex flex-col items-center gap-3">
+                        <Newspaper size={32} className="text-slate-200" />
+                        <p className="text-slate-400 text-sm font-medium">Mais notícias em breve.</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -896,10 +957,19 @@ const VideoBackground = () => (
 
 // ─── Main App ─────────────────────────────────────────────
 export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
+}
+
+function AppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(80);
   const [isMuted, setIsMuted] = useState(false);
-  const [activePage, setActivePage] = useState<'landing' | 'home' | 'podcast' | 'contact' | 'news' | 'admin'>('landing');
   const [radioStatus, setRadioStatus] = useState<'paused' | 'playing' | 'loading'>('paused');
 
   const playerRef = useRef<any>(null);
@@ -919,7 +989,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (activePage === 'podcast') {
+    if (location.pathname === '/podcast') {
       if (!window.YT) {
         const tag = document.createElement('script');
         tag.src = 'https://www.youtube.com/iframe_api';
@@ -929,7 +999,7 @@ export default function App() {
       } else { initPlayer(); }
     }
     return () => { if (playerRef.current) { playerRef.current.destroy(); playerRef.current = null; } };
-  }, [activePage]);
+  }, [location.pathname]);
 
   const initPlayer = () => {
     if (playerRef.current) return;
@@ -964,217 +1034,210 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen bg-[#0a0a0a] text-white font-sans overflow-hidden">
-
       <AnimatePresence mode="wait">
+        <Routes location={location}>
+          <Route path="/" element={
+            <LandingPage 
+              onPlay={() => {
+                navigate('/player');
+                if (!isPlaying) toggleRadio();
+              }} 
+            />
+          } />
+          
+          <Route path="/player" element={
+            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="relative z-10 flex flex-col items-center justify-between min-h-screen pb-6 pt-8">
 
-        {/* ═══════ LANDING ═══════ */}
-        {activePage === 'landing' && (
-          <LandingPage 
-            onPlay={() => {
-              setActivePage('home');
-              if (!isPlaying) toggleRadio();
-            }} 
-            onNavigate={setActivePage} 
-          />
-        )}
+              <VideoBackground />
 
-        {/* ═══════ HOME ═══════ */}
-        {activePage === 'home' && (
-          <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="relative z-10 flex flex-col items-center justify-between min-h-screen pb-6 pt-8">
+              <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.6 }} className="flex-1 flex items-center justify-center">
+                <img src="https://i.postimg.cc/fWdv55vc/LOGO-PP-(1).png" alt="Difusora Colatina 104.3"
+                  className="h-20 sm:h-28 w-auto object-contain drop-shadow-[0_0_50px_rgba(249,115,22,0.5)]"
+                  referrerPolicy="no-referrer" />
+              </motion.div>
 
-            <VideoBackground />
+              <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+                className="w-full px-4 max-w-sm mx-auto">
+                <div className="bg-white/10 backdrop-blur-2xl rounded-[1.75rem] border border-white/15 shadow-2xl overflow-hidden">
 
-            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6 }} className="flex-1 flex items-center justify-center">
-              <img src="https://i.postimg.cc/fWdv55vc/LOGO-PP-(1).png" alt="Difusora Colatina 104.3"
-                className="h-40 sm:h-56 w-auto object-contain drop-shadow-[0_0_50px_rgba(249,115,22,0.5)]"
-                referrerPolicy="no-referrer" />
-            </motion.div>
+                  <div className="flex flex-col items-center pt-8 pb-6 px-6 gap-3">
+                    <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/40">Difusora Colatina 104.3</p>
 
-            <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-              className="w-full px-4 max-w-sm mx-auto">
-              <div className="bg-white/10 backdrop-blur-2xl rounded-[1.75rem] border border-white/15 shadow-2xl overflow-hidden">
-
-                <div className="flex flex-col items-center pt-8 pb-6 px-6 gap-3">
-                  <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/40">Difusora Colatina 104.3</p>
-
-                  <motion.button whileTap={{ scale: 0.93 }} onClick={toggleRadio}
-                    className="relative w-[6.5rem] h-[6.5rem] rounded-full flex items-center justify-center mt-2 shadow-[0_0_60px_rgba(249,115,22,0.55)]"
-                    style={{ background: 'radial-gradient(circle at 35% 35%,#f97316,#ea580c)' }}>
-                    {radioStatus === 'loading' ? (
-                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                        className="w-8 h-8 rounded-full border-t-2 border-white border-2 border-white/20" />
-                    ) : isPlaying ? (
-                      <Pause className="w-10 h-10" fill="white" color="white" />
-                    ) : (
-                      <Play className="w-10 h-10 ml-1" fill="white" color="white" />
-                    )}
-                    {isPlaying && (
-                      <motion.span animate={{ scale: [1, 1.55], opacity: [0.35, 0] }}
-                        transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
-                        className="absolute inset-0 rounded-full bg-orange-600" style={{ zIndex: -1 }} />
-                    )}
-                  </motion.button>
-
-                  <div className="flex items-center gap-1.5 mt-1">
-                    {isPlaying && (
-                      <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.2, repeat: Infinity }}
-                        className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-                    )}
-                    <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">{statusLabel}</span>
-                  </div>
-                </div>
-
-                <div className="h-px bg-white/10" />
-
-                <div className="grid grid-cols-2 gap-0">
-                  {[
-                    { label: 'Podcast', icon: <Mic2 size={12} className="text-white/60" />, page: 'podcast' },
-                    { label: 'Contato', icon: <Mail size={12} className="text-white/60" />, page: 'contact' },
-                  ].map((btn, i) => (
-                    <motion.button key={btn.page} whileTap={{ scale: 0.97 }}
-                      onClick={() => setActivePage(btn.page as any)}
-                      className={`flex items-center justify-center gap-2 py-2 ${i === 0 ? 'border-r border-white/10' : ''} hover:bg-white/8 transition-all active:scale-95`}>
-                      {btn.icon}
-                      <span className="text-[9px] font-bold tracking-wider uppercase text-white/70">{btn.label}</span>
+                    <motion.button whileTap={{ scale: 0.93 }} onClick={toggleRadio}
+                      className="relative w-[6.5rem] h-[6.5rem] rounded-full flex items-center justify-center mt-2 shadow-[0_0_60px_rgba(249,115,22,0.55)]"
+                      style={{ background: 'radial-gradient(circle at 35% 35%,#f97316,#ea580c)' }}>
+                      {radioStatus === 'loading' ? (
+                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                          className="w-8 h-8 rounded-full border-t-2 border-white border-2 border-white/20" />
+                      ) : isPlaying ? (
+                        <Pause className="w-10 h-10" fill="white" color="white" />
+                      ) : (
+                        <Play className="w-10 h-10 ml-1" fill="white" color="white" />
+                      )}
+                      {isPlaying && (
+                        <motion.span animate={{ scale: [1, 1.55], opacity: [0.35, 0] }}
+                          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+                          className="absolute inset-0 rounded-full bg-orange-600" style={{ zIndex: -1 }} />
+                      )}
                     </motion.button>
-                  ))}
+
+                    <div className="flex items-center gap-1.5 mt-1">
+                      {isPlaying && (
+                        <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.2, repeat: Infinity }}
+                          className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                      )}
+                      <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">{statusLabel}</span>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-white/10" />
+
+                  <div className="grid grid-cols-2 gap-0">
+                    {[
+                      { label: 'Podcast', icon: <Mic2 size={12} className="text-white/60" />, page: 'podcast' },
+                      { label: 'Contato', icon: <Mail size={12} className="text-white/60" />, page: 'contact' },
+                    ].map((btn, i) => (
+                      <motion.button key={btn.page} whileTap={{ scale: 0.97 }}
+                        onClick={() => navigate(`/${btn.page}`)}
+                        className={`flex items-center justify-center gap-2 py-2 ${i === 0 ? 'border-r border-white/10' : ''} hover:bg-white/8 transition-all active:scale-95`}>
+                        {btn.icon}
+                        <span className="text-[9px] font-bold tracking-wider uppercase text-white/70">{btn.label}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  <div className="h-px bg-white/10" />
+
+                  <div className="flex items-center justify-between px-5 py-3.5">
+                    <div className="flex items-center gap-1">
+                      <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Instagram size={17} /></a>
+                      <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Facebook size={17} /></a>
+                      <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Twitter size={17} /></a>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={toggleMute} className="text-white/40 hover:text-white transition-colors p-1">
+                        {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                      </button>
+                      <input type="range" min="0" max="100" value={isMuted ? 0 : volume} onChange={handleVolumeChange}
+                        className="w-20 h-1 rounded-full appearance-none cursor-pointer accent-red-500 bg-white/20" />
+                    </div>
+                  </div>
+
                 </div>
 
-                <div className="h-px bg-white/10" />
+                {/* Botão admin discreto */}
+                <button onClick={() => navigate('/admin')}
+                  className="mt-4 mx-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest text-white/15 hover:text-white/30 transition-colors">
+                  <Lock size={9} /> Admin
+                </button>
 
-                <div className="flex items-center justify-between px-5 py-3.5">
-                  <div className="flex items-center gap-1">
-                    <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Instagram size={17} /></a>
-                    <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Facebook size={17} /></a>
-                    <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Twitter size={17} /></a>
+              </motion.div>
+            </motion.div>
+          } />
+
+          <Route path="/news" element={<NewsPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+
+          <Route path="/podcast" element={
+            <motion.div key="podcast" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}
+              className="relative z-10 flex flex-col min-h-screen">
+              
+              <VideoBackground />
+
+              <div className="relative z-10 flex items-center justify-between px-6 pt-8 pb-4">
+                <div className="w-10" />
+                <img src="https://i.postimg.cc/fWdv55vc/LOGO-PP-(1).png" alt="Logo" className="h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_20px_rgba(249,115,22,0.2)]" referrerPolicy="no-referrer" />
+                <button onClick={() => navigate('/player')} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full border border-white/15 transition-all active:scale-95 backdrop-blur-md"><X size={20} /></button>
+              </div>
+
+              <div className="relative z-10 flex-1 flex flex-col justify-center px-4 pb-4 gap-3">
+                <div className="relative w-full rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl" style={{ aspectRatio: '16/9' }}>
+                  <div id="youtube-player" className="absolute inset-0 w-full h-full" />
+                </div>
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-1.5">
+                    <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.2, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                    <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">Ao Vivo</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={toggleMute} className="text-white/40 hover:text-white transition-colors p-1">
-                      {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                    <button onClick={() => { const i = document.getElementById('youtube-player'); i?.requestFullscreen?.(); }}
+                      className="flex items-center gap-1.5 px-3 py-2.5 bg-white/10 rounded-full border border-white/10 hover:bg-white/15 transition-all active:scale-95 min-h-[44px]">
+                      <Maximize2 size={13} /><span className="text-[10px] font-bold tracking-widest uppercase">Tela cheia</span>
                     </button>
-                    <input type="range" min="0" max="100" value={isMuted ? 0 : volume} onChange={handleVolumeChange}
-                      className="w-20 h-1 rounded-full appearance-none cursor-pointer accent-red-500 bg-white/20" />
+                    <button className="p-2.5 bg-white/10 rounded-full border border-white/10 hover:bg-white/15 transition-all active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center">
+                      <Share2 size={14} />
+                    </button>
                   </div>
                 </div>
-
               </div>
-
-              {/* Botão admin discreto */}
-              <button onClick={() => setActivePage('admin')}
-                className="mt-4 mx-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest text-white/15 hover:text-white/30 transition-colors">
-                <Lock size={9} /> Admin
-              </button>
-
+              <div className="flex items-center justify-center gap-6 px-4 py-4 border-t border-white/8">
+                <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Instagram size={18} /></a>
+                <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Facebook size={18} /></a>
+                <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Twitter size={18} /></a>
+              </div>
             </motion.div>
-          </motion.div>
-        )}
+          } />
 
-        {/* ═══════ NEWS ═══════ */}
-        {activePage === 'news' && <NewsPage onBack={() => setActivePage('home')} />}
+          <Route path="/contact" element={
+            <motion.div key="contact" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}
+              className="relative z-10 flex flex-col min-h-screen">
+              
+              <VideoBackground />
 
-        {/* ═══════ ADMIN ═══════ */}
-        {activePage === 'admin' && <AdminPage onBack={() => setActivePage('home')} />}
-
-        {/* ═══════ PODCAST ═══════ */}
-        {activePage === 'podcast' && (
-          <motion.div key="podcast" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}
-            className="relative z-10 flex flex-col min-h-screen">
-            
-            <VideoBackground />
-
-            <div className="relative z-10 flex items-center justify-between px-6 pt-8 pb-4">
-              <div className="w-10" />
-              <img src="https://i.postimg.cc/fWdv55vc/LOGO-PP-(1).png" alt="Logo" className="h-10 md:h-14 w-auto object-contain drop-shadow-[0_0_20px_rgba(249,115,22,0.2)]" referrerPolicy="no-referrer" />
-              <button onClick={() => setActivePage('home')} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full border border-white/15 transition-all active:scale-95 backdrop-blur-md"><X size={20} /></button>
-            </div>
-
-            <div className="relative z-10 flex-1 flex flex-col justify-center px-4 pb-4 gap-3">
-              <div className="relative w-full rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl" style={{ aspectRatio: '16/9' }}>
-                <div id="youtube-player" className="absolute inset-0 w-full h-full" />
+              <div className="relative z-10 flex items-center justify-between px-6 pt-8 pb-4">
+                <div className="w-10" />
+                <img src="https://i.postimg.cc/fWdv55vc/LOGO-PP-(1).png" alt="Logo" className="h-8 md:h-10 w-auto object-contain drop-shadow-[0_0_20px_rgba(249,115,22,0.2)]" referrerPolicy="no-referrer" />
+                <button onClick={() => navigate('/player')} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full border border-white/15 transition-all active:scale-95 backdrop-blur-md"><X size={20} /></button>
               </div>
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-1.5">
-                  <motion.span animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.2, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">Ao Vivo</span>
+
+              <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-10 space-y-4 no-scrollbar">
+                <div className="pt-1 pb-3">
+                  <h2 className="text-3xl font-bold tracking-tight">Fale Conosco</h2>
+                  <p className="text-white/50 text-sm mt-2 leading-relaxed">Sua participação é fundamental para a Difusora 104.3. Mande sua sugestão ou pedido musical.</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => { const i = document.getElementById('youtube-player'); i?.requestFullscreen?.(); }}
-                    className="flex items-center gap-1.5 px-3 py-2.5 bg-white/10 rounded-full border border-white/10 hover:bg-white/15 transition-all active:scale-95 min-h-[44px]">
-                    <Maximize2 size={13} /><span className="text-[10px] font-bold tracking-widest uppercase">Tela cheia</span>
+                <div className="space-y-2.5">
+                  <a href="mailto:contato@difusora104.com.br" className="flex items-center gap-4 p-4 bg-white/8 rounded-2xl border border-white/10 hover:bg-white/12 transition-all active:scale-[0.98] min-h-[64px]">
+                    <div className="w-11 h-11 rounded-xl bg-orange-950/60 border border-orange-800/40 flex items-center justify-center shrink-0"><Mail size={18} className="text-orange-400" /></div>
+                    <div><p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">E-mail</p><p className="text-sm font-medium mt-0.5">contato@difusora104.com.br</p></div>
+                  </a>
+                  <a href="tel:+5527999999999" className="flex items-center gap-4 p-4 bg-white/8 rounded-2xl border border-white/10 hover:bg-white/12 transition-all active:scale-[0.98] min-h-[64px]">
+                    <div className="w-11 h-11 rounded-xl bg-orange-950/60 border border-orange-800/40 flex items-center justify-center shrink-0"><Phone size={18} className="text-orange-400" /></div>
+                    <div><p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Telefone</p><p className="text-sm font-medium mt-0.5">+55 (27) 99999-9999</p></div>
+                  </a>
+                  <div className="flex items-center gap-4 p-4 bg-white/8 rounded-2xl border border-white/10 min-h-[64px]">
+                    <div className="w-11 h-11 rounded-xl bg-orange-950/60 border border-orange-800/40 flex items-center justify-center shrink-0"><MapPin size={18} className="text-orange-400" /></div>
+                    <div><p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Localização</p><p className="text-sm font-medium mt-0.5">Colatina, ES — Brasil</p></div>
+                  </div>
+                </div>
+                <div className="bg-white/5 rounded-2xl border border-white/10 p-5 space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-white/35">Nome Completo</label>
+                    <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-orange-500/40 outline-none transition-all text-white placeholder:text-white/20 text-sm min-h-[50px]" placeholder="Seu nome..." />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-white/35">E-mail</label>
+                    <input type="email" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-orange-500/40 outline-none transition-all text-white placeholder:text-white/20 text-sm min-h-[50px]" placeholder="seu@email.com" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-white/35">Mensagem</label>
+                    <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-orange-500/40 outline-none transition-all h-28 resize-none text-white placeholder:text-white/20 text-sm" placeholder="Sugestão, pedido musical..." />
+                  </div>
+                  <button className="w-full rounded-xl py-4 font-bold tracking-widest uppercase flex items-center justify-center gap-2 text-sm bg-white text-black transition-all active:scale-[0.98] hover:bg-slate-50 min-h-[52px]">
+                    <span>Enviar Mensagem</span><Send size={15} />
                   </button>
-                  <button className="p-2.5 bg-white/10 rounded-full border border-white/10 hover:bg-white/15 transition-all active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center">
-                    <Share2 size={14} />
-                  </button>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center justify-center gap-6 px-4 py-4 border-t border-white/8">
-              <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Instagram size={18} /></a>
-              <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Facebook size={18} /></a>
-              <a href="#" className="text-white/40 hover:text-white transition-colors p-2"><Twitter size={18} /></a>
-            </div>
-          </motion.div>
-        )}
+            </motion.div>
+          } />
 
-        {/* ═══════ CONTACT ═══════ */}
-        {activePage === 'contact' && (
-          <motion.div key="contact" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}
-            className="relative z-10 flex flex-col min-h-screen">
-            
-            <VideoBackground />
-
-            <div className="relative z-10 flex items-center justify-between px-6 pt-8 pb-4">
-              <div className="w-10" />
-              <img src="https://i.postimg.cc/fWdv55vc/LOGO-PP-(1).png" alt="Logo" className="h-10 md:h-14 w-auto object-contain drop-shadow-[0_0_20px_rgba(249,115,22,0.2)]" referrerPolicy="no-referrer" />
-              <button onClick={() => setActivePage('home')} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full border border-white/15 transition-all active:scale-95 backdrop-blur-md"><X size={20} /></button>
-            </div>
-
-            <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-10 space-y-4 no-scrollbar">
-              <div className="pt-1 pb-3">
-                <h2 className="text-3xl font-bold tracking-tight">Fale Conosco</h2>
-                <p className="text-white/50 text-sm mt-2 leading-relaxed">Sua participação é fundamental para a Difusora 104.3. Mande sua sugestão ou pedido musical.</p>
-              </div>
-              <div className="space-y-2.5">
-                <a href="mailto:contato@difusora104.com.br" className="flex items-center gap-4 p-4 bg-white/8 rounded-2xl border border-white/10 hover:bg-white/12 transition-all active:scale-[0.98] min-h-[64px]">
-                  <div className="w-11 h-11 rounded-xl bg-orange-950/60 border border-orange-800/40 flex items-center justify-center shrink-0"><Mail size={18} className="text-orange-400" /></div>
-                  <div><p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">E-mail</p><p className="text-sm font-medium mt-0.5">contato@difusora104.com.br</p></div>
-                </a>
-                <a href="tel:+5527999999999" className="flex items-center gap-4 p-4 bg-white/8 rounded-2xl border border-white/10 hover:bg-white/12 transition-all active:scale-[0.98] min-h-[64px]">
-                  <div className="w-11 h-11 rounded-xl bg-orange-950/60 border border-orange-800/40 flex items-center justify-center shrink-0"><Phone size={18} className="text-orange-400" /></div>
-                  <div><p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Telefone</p><p className="text-sm font-medium mt-0.5">+55 (27) 99999-9999</p></div>
-                </a>
-                <div className="flex items-center gap-4 p-4 bg-white/8 rounded-2xl border border-white/10 min-h-[64px]">
-                  <div className="w-11 h-11 rounded-xl bg-orange-950/60 border border-orange-800/40 flex items-center justify-center shrink-0"><MapPin size={18} className="text-orange-400" /></div>
-                  <div><p className="text-[9px] font-bold text-white/35 uppercase tracking-widest">Localização</p><p className="text-sm font-medium mt-0.5">Colatina, ES — Brasil</p></div>
-                </div>
-              </div>
-              <div className="bg-white/5 rounded-2xl border border-white/10 p-5 space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-white/35">Nome Completo</label>
-                  <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-orange-500/40 outline-none transition-all text-white placeholder:text-white/20 text-sm min-h-[50px]" placeholder="Seu nome..." />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-white/35">E-mail</label>
-                  <input type="email" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-orange-500/40 outline-none transition-all text-white placeholder:text-white/20 text-sm min-h-[50px]" placeholder="seu@email.com" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-white/35">Mensagem</label>
-                  <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-orange-500/40 outline-none transition-all h-28 resize-none text-white placeholder:text-white/20 text-sm" placeholder="Sugestão, pedido musical..." />
-                </div>
-                <button className="w-full rounded-xl py-4 font-bold tracking-widest uppercase flex items-center justify-center gap-2 text-sm bg-white text-black transition-all active:scale-[0.98] hover:bg-slate-50 min-h-[52px]">
-                  <span>Enviar Mensagem</span><Send size={15} />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </AnimatePresence>
     </div>
   );
